@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from media_stt.transcriber import Segment, Transcription
+from media_stt.models import Segment, Transcription
 from media_stt.writers import render_metadata, render_srt, write_srt
 
 

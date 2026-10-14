@@ -11,10 +11,10 @@ from tqdm import tqdm
 
 from media_stt import __version__
 from media_stt.audio import AudioError, ensure_ffmpeg
-from media_stt.config import DEFAULT_MODEL, DEFAULT_OUTPUT_DIR
+from media_stt.backends import BackendError, create_backend, supported_backends
+from media_stt.config import DEFAULT_OUTPUT_DIR
 from media_stt.discovery import collect_inputs
 from media_stt.pipeline import FileOutcome, Pipeline
-from media_stt.transcriber import Transcriber
 from media_stt.utils import format_duration
 
 logger = logging.getLogger("media_stt")
@@ -23,7 +23,7 @@ logger = logging.getLogger("media_stt")
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="media-stt",
-        description="Local speech-to-text powered by Whisper MLX (Apple Silicon).",
+        description="Local speech-to-text powered by Whisper (MLX or faster-whisper).",
     )
     parser.add_argument(
         "audio",
@@ -37,10 +37,17 @@ def build_parser() -> argparse.ArgumentParser:
         help=f"Output directory (default: {DEFAULT_OUTPUT_DIR})",
     )
     parser.add_argument(
+        "-b",
+        "--backend",
+        choices=supported_backends(),
+        default=None,
+        help="Transcription backend (default: auto by platform)",
+    )
+    parser.add_argument(
         "-m",
         "--model",
-        default=DEFAULT_MODEL,
-        help=f"Whisper MLX model (default: {DEFAULT_MODEL})",
+        default=None,
+        help="Model name or Hugging Face repo (default: backend-specific)",
     )
     parser.add_argument(
         "-l",
@@ -92,10 +99,15 @@ def main(argv: list[str] | None = None) -> int:
     language = None if args.language.lower() == "auto" else args.language
     output_dir = Path(args.output).expanduser()
 
-    _print_header(len(sources), args.model, args.language, output_dir)
+    try:
+        backend = create_backend(args.backend, args.model, language)
+    except BackendError as error:
+        logger.error("%s", error)
+        return 1
 
-    transcriber = Transcriber(model=args.model, language=language)
-    pipeline = Pipeline(transcriber, output_dir, write_subtitles=args.srt)
+    _print_header(len(sources), backend.name, backend.model, args.language, output_dir)
+
+    pipeline = Pipeline(backend, output_dir, write_subtitles=args.srt)
 
     results: Iterator[FileOutcome] = pipeline.iter_run(sources)
     if len(sources) > 1:
@@ -126,10 +138,11 @@ def _configure_logging(verbose: bool) -> None:
     logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO, format="%(message)s")
 
 
-def _print_header(count: int, model: str, language: str, output_dir: Path) -> None:
+def _print_header(count: int, backend: str, model: str, language: str, output_dir: Path) -> None:
     print("\n🎙️  Media STT")
     print("-----------------------------")
     print(f"Files   : {count}")
+    print(f"Backend : {backend}")
     print(f"Model   : {model}")
     print(f"Language: {language}")
     print(f"Output  : {output_dir}")

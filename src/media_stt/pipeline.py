@@ -9,7 +9,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from media_stt.audio import decode_to_wav
-from media_stt.transcriber import Transcriber, Transcription
+from media_stt.backends.base import Backend
+from media_stt.models import Transcription
 from media_stt.utils import file_timestamp
 from media_stt.writers import write_metadata, write_srt, write_text
 
@@ -33,12 +34,12 @@ class FileOutcome:
 class Pipeline:
     def __init__(
         self,
-        transcriber: Transcriber,
+        backend: Backend,
         output_dir: Path,
         *,
         write_subtitles: bool = False,
     ) -> None:
-        self.transcriber = transcriber
+        self.backend = backend
         self.output_dir = output_dir
         self.write_subtitles = write_subtitles
 
@@ -55,7 +56,7 @@ class Pipeline:
     def run_file(self, source: Path, work_dir: Path) -> FileOutcome:
         try:
             wav_path = decode_to_wav(source, work_dir)
-            transcription = self.transcriber.transcribe(wav_path)
+            transcription = self.backend.transcribe(wav_path)
             outputs = self._write_outputs(source, transcription)
             return FileOutcome(source=source, transcription=transcription, outputs=outputs)
         except Exception as error:  # report and keep processing the batch
@@ -76,6 +77,6 @@ class Pipeline:
             outputs.append(srt_path)
 
         meta_path = self.output_dir / f"{stem}.meta"
-        write_metadata(transcription, source, self.transcriber.model, meta_path)
+        write_metadata(transcription, source, self.backend.model, meta_path)
         outputs.append(meta_path)
         return outputs

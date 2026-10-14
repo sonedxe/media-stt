@@ -1,30 +1,16 @@
-"""Thin, testable wrapper around Whisper MLX."""
+"""Whisper MLX backend, for Apple Silicon."""
 
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
 from pathlib import Path
 
-
-@dataclass(frozen=True)
-class Segment:
-    """A transcribed span with start/end times in seconds."""
-
-    start: float
-    end: float
-    text: str
+from media_stt.models import Segment, Transcription
 
 
-@dataclass(frozen=True)
-class Transcription:
-    text: str
-    language: str
-    segments: list[Segment] = field(default_factory=list)
-    elapsed_seconds: float = 0.0
+class MlxBackend:
+    name = "mlx"
 
-
-class Transcriber:
     def __init__(self, model: str, language: str | None = None) -> None:
         self.model = model
         self.language = language

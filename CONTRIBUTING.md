@@ -27,5 +27,5 @@ pytest
 
 ## Reporting issues
 
-Open an [issue](https://github.com/kokovrinn/media-stt/issues) describing the
+Open an [issue](https://github.com/sonedxe/media-stt/issues) describing the
 problem, the command you ran, and a sample of any error output.

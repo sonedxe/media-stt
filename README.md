@@ -1,39 +1,108 @@
 # Media STT
 
-Local speech-to-text powered by **Whisper MLX**, optimized for Apple Silicon.
+**Local, cross-platform speech-to-text for any audio or video file.**
 
-Transcribes any audio or video format that `ffmpeg` can decode — including
-**WhatsApp voice notes** (`.opus` / `.ogg`), `.m4a`, `.mp3`, `.wav` and video
-files such as `.mp4` or `.mkv`. Every input is normalized to 16 kHz mono PCM
-with ffmpeg before being handed to Whisper, so WhatsApp exports work out of the
-box. Everything runs offline on your machine.
+[![CI](https://github.com/sonedxe/media-stt/actions/workflows/ci.yml/badge.svg)](https://github.com/sonedxe/media-stt/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
+[![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg)](#installation)
+[![Powered by Whisper](https://img.shields.io/badge/powered%20by-Whisper-black.svg)](https://github.com/openai/whisper)
 
-## Requirements
+Point it at a file and get a transcript back — everything runs **offline on your
+machine**, no API keys, no uploads. It decodes any format `ffmpeg` understands,
+including **WhatsApp voice notes** (`.opus` / `.ogg`), `.m4a`, `.mp3`, `.wav`
+and video files such as `.mp4` / `.mkv`.
 
-- macOS on Apple Silicon (M-series)
-- Python 3.11+
-- [ffmpeg](https://ffmpeg.org/) in `PATH` (`brew install ffmpeg`)
+```console
+$ media-stt "WhatsApp Audio 2026-10-14 at 10.56.31.opus" -l es --srt
+🎙️  Media STT
+-----------------------------
+Files   : 1
+Backend : mlx
+Model   : mlx-community/whisper-medium-mlx
+Language: es
+Output  : output
+-----------------------------
+🎥 WhatsApp Audio 2026-10-14 at 10.56.31.opus
+  ✅ output/WhatsApp Audio 2026-10-14 at 10.56.31_2026-10-14_11-21-03.txt
+  ✅ output/WhatsApp Audio 2026-10-14 at 10.56.31_2026-10-14_11-21-03.srt
+  ✅ output/WhatsApp Audio 2026-10-14 at 10.56.31_2026-10-14_11-21-03.meta
+     language: es | time: 00:15 | chars: 2291
 
-## Setup
+✅ Completed: 1 file(s).
+```
+
+## Features
+
+- 🎧 **Any format** — audio *and* video, normalized through ffmpeg.
+- 💬 **WhatsApp ready** — `.opus` / `.ogg` voice notes just work.
+- 🖥️ **Cross-platform** — Apple Silicon (MLX), plus Windows / Linux (faster-whisper).
+- 🔒 **Fully local** — models run on your machine; nothing leaves it.
+- 📝 **Subtitles** — optional `.srt` output with timestamps.
+- 📦 **Batch** — pass many files, or a whole directory (`-r` to recurse).
+- 🌐 **Auto language detection**, or force one with `--language`.
+
+## Installation
+
+Requires **Python 3.11+** and **[ffmpeg](https://ffmpeg.org/)** on your `PATH`.
 
 ```bash
+git clone https://github.com/sonedxe/media-stt.git
 cd media-stt
-python3 -m venv .venv
-source .venv/bin/activate
+python -m venv .venv
+```
+
+Activate the virtual environment:
+
+| Platform | Command |
+|---|---|
+| macOS / Linux | `source .venv/bin/activate` |
+| Windows (PowerShell) | `.venv\Scripts\Activate.ps1` |
+| Windows (cmd) | `.venv\Scripts\activate.bat` |
+
+Install ffmpeg if you don't have it:
+
+| Platform | Command |
+|---|---|
+| macOS | `brew install ffmpeg` |
+| Debian / Ubuntu | `sudo apt install ffmpeg` |
+| Fedora | `sudo dnf install ffmpeg` |
+| Windows | `winget install Gyan.FFmpeg` |
+
+Finally:
+
+```bash
 pip install -e .
 ```
 
-The Whisper model is downloaded on first run and cached in
-`~/.cache/huggingface/hub`, so later runs work without internet.
+The right backend is installed automatically for your platform. The Whisper
+model is downloaded on first run and cached in `~/.cache/huggingface/hub`, so
+later runs work offline.
+
+## Backends
+
+Media STT picks a backend automatically based on your platform. You can
+override it with `-b` / `--backend`.
+
+| Platform | Backend | Default model |
+|---|---|---|
+| macOS (Apple Silicon) | `mlx` | `mlx-community/whisper-medium-mlx` |
+| Linux · Windows · CPU | `faster-whisper` | `medium` |
+
+Model names differ per backend: MLX takes a Hugging Face repo, faster-whisper
+takes a size name.
+
+```bash
+media-stt note.opus -b mlx -m mlx-community/whisper-large-v3-mlx   # best on Mac
+media-stt note.opus -b faster-whisper -m large-v3                 # tiny..large-v3
+```
 
 ## Usage
 
 ```bash
-media-stt "~/Downloads/WhatsApp Audio 2026-10-14 at 10.56.31.opus"   # installed script
-python -m media_stt note.opus recording.m4a                          # or as a module
-
-# A whole folder, recursively, forcing Spanish and emitting subtitles
-media-stt ~/Downloads/voice-notes -r -l es --srt
+media-stt "voice-note.opus"                     # one file, auto language
+media-stt note.opus recording.m4a               # several files
+media-stt ~/Downloads/voice-notes -r -l es --srt   # a whole folder, recursive
 ```
 
 ### Options
@@ -42,7 +111,8 @@ media-stt ~/Downloads/voice-notes -r -l es --srt
 |---|---|
 | `audio` | One or more files, or directories to scan |
 | `-o`, `--output` | Output directory (default: `output`) |
-| `-m`, `--model` | Whisper MLX model (default: `mlx-community/whisper-medium-mlx`) |
+| `-b`, `--backend` | `mlx` or `faster-whisper` (default: auto by platform) |
+| `-m`, `--model` | Model name or Hugging Face repo (default: backend-specific) |
 | `-l`, `--language` | Force a language, e.g. `es`, `en` (default: `auto`) |
 | `--srt` | Also write a `.srt` subtitle file with timestamps |
 | `-r`, `--recursive` | Scan directories recursively |
@@ -51,31 +121,38 @@ media-stt ~/Downloads/voice-notes -r -l es --srt
 
 ## Output
 
-For every input `<name>.<ext>` the script writes to the output directory:
+For every input `<name>.<ext>` the tool writes to the output directory:
 
 - `<name>_<timestamp>.txt` — the plain transcript
-- `<name>_<timestamp>.meta` — model, detected language, character count, timing
+- `<name>_<timestamp>.meta` — backend, model, detected language, timing
 - `<name>_<timestamp>.srt` — only with `--srt`
 
 ## Architecture
 
-One responsibility per module, wired together by a small orchestration layer:
+A small port-and-adapters layout: the transcription engine is a **port**
+(`Backend`) with one **adapter** per platform, and everything else is wired by a
+thin orchestration layer.
 
 ```
 src/media_stt/
-├── cli.py          # argument parsing and user-facing output
-├── config.py       # constants and defaults
-├── discovery.py    # expand files/directories into a media file list
-├── audio.py        # ffmpeg availability + decode to 16 kHz mono WAV
-├── transcriber.py  # Whisper MLX wrapper (Transcription / Segment models)
-├── writers.py      # render + persist text, SRT and metadata
-├── pipeline.py     # orchestration: decode → transcribe → write
-└── utils.py        # time formatting helpers
+├── cli.py                      # argument parsing and user-facing output
+├── config.py                   # constants and per-backend defaults
+├── models.py                   # domain models (Transcription, Segment)
+├── discovery.py                # expand files/directories into a media list
+├── audio.py                    # ffmpeg availability + decode to 16 kHz mono WAV
+├── pipeline.py                 # orchestration: decode → transcribe → write
+├── writers.py                  # render + persist text, SRT and metadata
+├── utils.py                    # time formatting helpers
+└── backends/
+    ├── base.py                 # the Backend port (Protocol)
+    ├── mlx_backend.py          # Apple Silicon (Whisper MLX)
+    ├── faster_whisper_backend.py  # Windows / Linux / CPU (CTranslate2)
+    └── __init__.py             # registry + platform-aware selection
 ```
 
-Data flows one way: `cli` → `pipeline` → (`audio`, `transcriber`, `writers`).
-`mlx_whisper` is imported lazily, so the package imports and tests run without
-MLX installed.
+Data flows one way: `cli` → `pipeline` → (`audio`, `backend`, `writers`).
+Backends are imported lazily, so the package imports and tests run without any
+engine installed.
 
 ## Development
 
@@ -89,9 +166,8 @@ pytest
 
 - First run of a model is slower (download + warm-up).
 - A failing file is reported and the batch continues.
-- `--model mlx-community/whisper-large-v3-mlx` gives better accuracy at the cost
-  of speed and memory.
+- Want the CPU backend on Apple Silicon too? `pip install -e ".[cpu]"`.
 
 ## License
 
-[MIT](LICENSE) © 2026 kokovrinn
+[MIT](LICENSE) © 2026 sonedxe

@@ -2,8 +2,14 @@
 
 from __future__ import annotations
 
-DEFAULT_MODEL = "mlx-community/whisper-medium-mlx"
 DEFAULT_OUTPUT_DIR = "output"
+
+# Default model per backend. MLX uses Hugging Face repos; faster-whisper uses
+# its own size names (tiny, base, small, medium, large-v3, ...).
+DEFAULT_MODELS = {
+    "mlx": "mlx-community/whisper-medium-mlx",
+    "faster-whisper": "medium",
+}
 
 # Whisper models are trained on 16 kHz mono PCM audio.
 SAMPLE_RATE = 16_000
