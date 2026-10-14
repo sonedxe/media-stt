@@ -21,7 +21,6 @@ logger = logging.getLogger("media_stt")
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Build the argument parser."""
     parser = argparse.ArgumentParser(
         prog="media-stt",
         description="Local speech-to-text powered by Whisper MLX (Apple Silicon).",
@@ -75,7 +74,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Run the CLI. Returns a process exit code."""
+    """Run the CLI and return a process exit code."""
     args = build_parser().parse_args(argv)
     _configure_logging(args.verbose)
 

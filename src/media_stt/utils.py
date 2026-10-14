@@ -25,5 +25,4 @@ def format_srt_timestamp(seconds: float) -> str:
 
 
 def file_timestamp() -> str:
-    """Return a timestamp suitable for embedding in output file names."""
     return datetime.now().strftime("%Y-%m-%d_%H-%M-%S")

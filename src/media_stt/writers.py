@@ -10,7 +10,6 @@ from media_stt.utils import format_duration, format_srt_timestamp
 
 
 def render_srt(segments: list[Segment]) -> str:
-    """Render segments as an SRT subtitle document."""
     blocks: list[str] = []
     for index, segment in enumerate(segments, start=1):
         blocks.append(
@@ -27,7 +26,6 @@ def render_srt(segments: list[Segment]) -> str:
 
 
 def render_metadata(transcription: Transcription, source: Path, model: str) -> str:
-    """Build the human-readable metadata report."""
     return f"""
 Media STT Report
 ================
@@ -53,15 +51,12 @@ Created:
 
 
 def write_text(text: str, path: Path) -> None:
-    """Write the plain transcript."""
     path.write_text(text, encoding="utf-8")
 
 
 def write_srt(segments: list[Segment], path: Path) -> None:
-    """Write the SRT subtitle file."""
     path.write_text(render_srt(segments), encoding="utf-8")
 
 
 def write_metadata(transcription: Transcription, source: Path, model: str, path: Path) -> None:
-    """Write the metadata report."""
     path.write_text(render_metadata(transcription, source, model), encoding="utf-8")

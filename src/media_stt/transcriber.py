@@ -18,8 +18,6 @@ class Segment:
 
 @dataclass(frozen=True)
 class Transcription:
-    """The result of transcribing a single file."""
-
     text: str
     language: str
     segments: list[Segment] = field(default_factory=list)
@@ -27,16 +25,12 @@ class Transcription:
 
 
 class Transcriber:
-    """Transcribe audio files locally with Whisper MLX."""
-
     def __init__(self, model: str, language: str | None = None) -> None:
         self.model = model
         self.language = language
 
     def transcribe(self, audio_path: Path) -> Transcription:
-        """Transcribe ``audio_path`` and return the decoded result."""
-        # Imported lazily so the rest of the package stays importable (and
-        # testable) on machines without MLX.
+        # Imported lazily so the package stays importable without MLX.
         import mlx_whisper
 
         started = time.perf_counter()

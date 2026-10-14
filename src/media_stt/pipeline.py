@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class FileOutcome:
-    """What happened for a single input file."""
+    """Outcome for a single input file."""
 
     source: Path
     transcription: Transcription | None = None
@@ -27,13 +27,10 @@ class FileOutcome:
 
     @property
     def ok(self) -> bool:
-        """Whether the file was transcribed successfully."""
         return self.error is None
 
 
 class Pipeline:
-    """Run the transcription pipeline over a set of files."""
-
     def __init__(
         self,
         transcriber: Transcriber,
@@ -46,7 +43,6 @@ class Pipeline:
         self.write_subtitles = write_subtitles
 
     def run(self, sources: list[Path]) -> list[FileOutcome]:
-        """Transcribe every source, returning one outcome per file."""
         return list(self.iter_run(sources))
 
     def iter_run(self, sources: list[Path]) -> Iterator[FileOutcome]:
@@ -57,7 +53,6 @@ class Pipeline:
                 yield self.run_file(source, Path(work_dir))
 
     def run_file(self, source: Path, work_dir: Path) -> FileOutcome:
-        """Decode, transcribe and persist a single file."""
         try:
             wav_path = decode_to_wav(source, work_dir)
             transcription = self.transcriber.transcribe(wav_path)

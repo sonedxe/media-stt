@@ -14,7 +14,6 @@ class AudioError(RuntimeError):
 
 
 def ensure_ffmpeg() -> None:
-    """Raise a helpful error early when ffmpeg is not available."""
     if shutil.which("ffmpeg") is None:
         raise AudioError("ffmpeg was not found in PATH. Install it with: brew install ffmpeg")
 
