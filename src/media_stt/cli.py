@@ -11,10 +11,10 @@ from tqdm import tqdm
 
 from media_stt import __version__
 from media_stt.audio import AudioError, ensure_ffmpeg
-from media_stt.backends import BackendError, create_backend, supported_backends
 from media_stt.config import DEFAULT_OUTPUT_DIR
 from media_stt.discovery import collect_inputs
 from media_stt.pipeline import FileOutcome, Pipeline
+from media_stt.transcribers import TranscriberError, create_transcriber, supported_transcribers
 from media_stt.utils import format_duration
 
 logger = logging.getLogger("media_stt")
@@ -37,17 +37,16 @@ def build_parser() -> argparse.ArgumentParser:
         help=f"Output directory (default: {DEFAULT_OUTPUT_DIR})",
     )
     parser.add_argument(
-        "-b",
-        "--backend",
-        choices=supported_backends(),
+        "--transcriber",
+        choices=supported_transcribers(),
         default=None,
-        help="Transcription backend (default: auto by platform)",
+        help="Transcriber to use (default: auto by platform)",
     )
     parser.add_argument(
         "-m",
         "--model",
         default=None,
-        help="Model name or Hugging Face repo (default: backend-specific)",
+        help="Model name or Hugging Face repo (default: transcriber-specific)",
     )
     parser.add_argument(
         "-l",
@@ -100,14 +99,14 @@ def main(argv: list[str] | None = None) -> int:
     output_dir = Path(args.output).expanduser()
 
     try:
-        backend = create_backend(args.backend, args.model, language)
-    except BackendError as error:
+        transcriber = create_transcriber(args.transcriber, args.model, language)
+    except TranscriberError as error:
         logger.error("%s", error)
         return 1
 
-    _print_header(len(sources), backend.name, backend.model, args.language, output_dir)
+    _print_header(len(sources), transcriber.name, transcriber.model, args.language, output_dir)
 
-    pipeline = Pipeline(backend, output_dir, write_subtitles=args.srt)
+    pipeline = Pipeline(transcriber, output_dir, write_subtitles=args.srt)
 
     results: Iterator[FileOutcome] = pipeline.iter_run(sources)
     if len(sources) > 1:
@@ -138,14 +137,14 @@ def _configure_logging(verbose: bool) -> None:
     logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO, format="%(message)s")
 
 
-def _print_header(count: int, backend: str, model: str, language: str, output_dir: Path) -> None:
+def _print_header(count: int, transcriber: str, model: str, language: str, output_dir: Path) -> None:
     print("\n🎙️  Media STT")
     print("-----------------------------")
-    print(f"Files   : {count}")
-    print(f"Backend : {backend}")
-    print(f"Model   : {model}")
-    print(f"Language: {language}")
-    print(f"Output  : {output_dir}")
+    print(f"{'Files':<12}: {count}")
+    print(f"{'Transcriber':<12}: {transcriber}")
+    print(f"{'Model':<12}: {model}")
+    print(f"{'Language':<12}: {language}")
+    print(f"{'Output':<12}: {output_dir}")
     print("-----------------------------")
 
 

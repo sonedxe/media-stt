@@ -1,4 +1,4 @@
-"""Whisper MLX backend, for Apple Silicon."""
+"""Whisper MLX transcriber, for Apple Silicon."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 from media_stt.models import Segment, Transcription
 
 
-class MlxBackend:
+class MlxTranscriber:
     name = "mlx"
 
     def __init__(self, model: str, language: str | None = None) -> None:

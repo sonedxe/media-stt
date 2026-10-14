@@ -1,4 +1,4 @@
-"""Domain models shared by every transcription backend."""
+"""Domain models shared by every transcriber."""
 
 from __future__ import annotations
 

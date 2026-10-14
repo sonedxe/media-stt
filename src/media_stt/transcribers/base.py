@@ -1,4 +1,4 @@
-"""The backend port: anything that turns an audio file into a Transcription."""
+"""The transcriber port: anything that turns an audio file into a Transcription."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from typing import Protocol
 from media_stt.models import Transcription
 
 
-class Backend(Protocol):
+class Transcriber(Protocol):
     """Transcription engine contract.
 
     Implementations receive audio already decoded to 16 kHz mono WAV.

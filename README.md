@@ -17,11 +17,11 @@ and video files such as `.mp4` / `.mkv`.
 $ media-stt "WhatsApp Audio 2026-10-14 at 10.56.31.opus" -l es --srt
 🎙️  Media STT
 -----------------------------
-Files   : 1
-Backend : mlx
-Model   : mlx-community/whisper-medium-mlx
-Language: es
-Output  : output
+Files       : 1
+Transcriber : mlx
+Model       : mlx-community/whisper-medium-mlx
+Language    : es
+Output      : output
 -----------------------------
 🎥 WhatsApp Audio 2026-10-14 at 10.56.31.opus
   ✅ output/WhatsApp Audio 2026-10-14 at 10.56.31_2026-10-14_11-21-03.txt
@@ -75,26 +75,26 @@ Finally:
 pip install -e .
 ```
 
-The right backend is installed automatically for your platform. The Whisper
+The right transcriber is installed automatically for your platform. The Whisper
 model is downloaded on first run and cached in `~/.cache/huggingface/hub`, so
 later runs work offline.
 
-## Backends
+## Transcribers
 
-Media STT picks a backend automatically based on your platform. You can
-override it with `-b` / `--backend`.
+Media STT picks a transcriber automatically based on your platform. Override it
+with `--transcriber`.
 
-| Platform | Backend | Default model |
+| Platform | Transcriber | Default model |
 |---|---|---|
 | macOS (Apple Silicon) | `mlx` | `mlx-community/whisper-medium-mlx` |
 | Linux · Windows · CPU | `faster-whisper` | `medium` |
 
-Model names differ per backend: MLX takes a Hugging Face repo, faster-whisper
+Model names differ per transcriber: MLX takes a Hugging Face repo, faster-whisper
 takes a size name.
 
 ```bash
-media-stt note.opus -b mlx -m mlx-community/whisper-large-v3-mlx   # best on Mac
-media-stt note.opus -b faster-whisper -m large-v3                 # tiny..large-v3
+media-stt note.opus --transcriber mlx -m mlx-community/whisper-large-v3-mlx   # best on Mac
+media-stt note.opus --transcriber faster-whisper -m large-v3                 # tiny..large-v3
 ```
 
 ## Usage
@@ -111,8 +111,8 @@ media-stt ~/Downloads/voice-notes -r -l es --srt   # a whole folder, recursive
 |---|---|
 | `audio` | One or more files, or directories to scan |
 | `-o`, `--output` | Output directory (default: `output`) |
-| `-b`, `--backend` | `mlx` or `faster-whisper` (default: auto by platform) |
-| `-m`, `--model` | Model name or Hugging Face repo (default: backend-specific) |
+| `--transcriber` | `mlx` or `faster-whisper` (default: auto by platform) |
+| `-m`, `--model` | Model name or Hugging Face repo (default: transcriber-specific) |
 | `-l`, `--language` | Force a language, e.g. `es`, `en` (default: `auto`) |
 | `--srt` | Also write a `.srt` subtitle file with timestamps |
 | `-r`, `--recursive` | Scan directories recursively |
@@ -124,35 +124,35 @@ media-stt ~/Downloads/voice-notes -r -l es --srt   # a whole folder, recursive
 For every input `<name>.<ext>` the tool writes to the output directory:
 
 - `<name>_<timestamp>.txt` — the plain transcript
-- `<name>_<timestamp>.meta` — backend, model, detected language, timing
+- `<name>_<timestamp>.meta` — transcriber, model, detected language, timing
 - `<name>_<timestamp>.srt` — only with `--srt`
 
 ## Architecture
 
 A small port-and-adapters layout: the transcription engine is a **port**
-(`Backend`) with one **adapter** per platform, and everything else is wired by a
-thin orchestration layer.
+(`Transcriber`) with one **adapter** per platform, and everything else is wired
+by a thin orchestration layer.
 
 ```
 src/media_stt/
 ├── cli.py                      # argument parsing and user-facing output
-├── config.py                   # constants and per-backend defaults
+├── config.py                   # constants and per-transcriber defaults
 ├── models.py                   # domain models (Transcription, Segment)
 ├── discovery.py                # expand files/directories into a media list
 ├── audio.py                    # ffmpeg availability + decode to 16 kHz mono WAV
 ├── pipeline.py                 # orchestration: decode → transcribe → write
 ├── writers.py                  # render + persist text, SRT and metadata
 ├── utils.py                    # time formatting helpers
-└── backends/
-    ├── base.py                 # the Backend port (Protocol)
-    ├── mlx_backend.py          # Apple Silicon (Whisper MLX)
-    ├── faster_whisper_backend.py  # Windows / Linux / CPU (CTranslate2)
+└── transcribers/
+    ├── base.py                 # the Transcriber port (Protocol)
+    ├── mlx.py                  # Apple Silicon (Whisper MLX)
+    ├── faster_whisper.py       # Windows / Linux / CPU (CTranslate2)
     └── __init__.py             # registry + platform-aware selection
 ```
 
-Data flows one way: `cli` → `pipeline` → (`audio`, `backend`, `writers`).
-Backends are imported lazily, so the package imports and tests run without any
-engine installed.
+Data flows one way: `cli` → `pipeline` → (`audio`, `transcriber`, `writers`).
+Transcribers are imported lazily, so the package imports and tests run without
+any engine installed.
 
 ## Development
 
@@ -166,7 +166,7 @@ pytest
 
 - First run of a model is slower (download + warm-up).
 - A failing file is reported and the batch continues.
-- Want the CPU backend on Apple Silicon too? `pip install -e ".[cpu]"`.
+- Want the CPU transcriber on Apple Silicon too? `pip install -e ".[cpu]"`.
 
 ## License
 

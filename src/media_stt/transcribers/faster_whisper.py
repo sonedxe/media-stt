@@ -1,4 +1,4 @@
-"""faster-whisper (CTranslate2) backend, for Windows, Linux and CPU."""
+"""faster-whisper (CTranslate2) transcriber, for Windows, Linux and CPU."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 from media_stt.models import Segment, Transcription
 
 
-class FasterWhisperBackend:
+class FasterWhisperTranscriber:
     name = "faster-whisper"
 
     def __init__(self, model: str, language: str | None = None, device: str = "auto") -> None:
